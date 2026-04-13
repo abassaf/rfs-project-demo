@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 
+import { weatherQueryKeys } from '@/lib/query-keys'
 import type { CityResult } from '@/types/weather.types'
 
 const SEARCH_DEBOUNCE_MS = 400
 const SEARCH_ENDPOINT = 'http://localhost:3001/api/weather/search'
+const SEARCH_QUERY_STALE_TIME = 2 * 60 * 1000
+const SEARCH_QUERY_GC_TIME = 5 * 60 * 1000
 
 interface SearchErrorResponse {
   error?: string
@@ -15,75 +19,54 @@ interface UseWeatherSearchResult {
   error: string | null
 }
 
+const fetchCities = (
+  query: string,
+  signal?: AbortSignal,
+): Promise<CityResult[]> => {
+  const url = new URL(SEARCH_ENDPOINT)
+  url.searchParams.set('q', query)
+
+  return fetch(url.toString(), { signal })
+    .then(async (response) => {
+      if (!response.ok) {
+        const payload = (await response.json().catch(
+          (): SearchErrorResponse => ({}),
+        )) as SearchErrorResponse
+
+        throw new Error(payload.error ?? 'Failed to search for cities.')
+      }
+
+      return response.json() as Promise<CityResult[]>
+    })
+}
+
 export const useWeatherSearch = (query: string): UseWeatherSearchResult => {
-  const [results, setResults] = useState<CityResult[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [debouncedQuery, setDebouncedQuery] = useState(query.trim())
 
   useEffect(() => {
     const normalizedQuery = query.trim()
-
-    if (!normalizedQuery) {
-      setResults([])
-      setIsLoading(false)
-      setError(null)
-      return
-    }
-
-    const controller = new AbortController()
     const timeoutId = window.setTimeout(() => {
-      setIsLoading(true)
-      setError(null)
-
-      const url = new URL(SEARCH_ENDPOINT)
-      url.searchParams.set('q', normalizedQuery)
-
-      fetch(url.toString(), { signal: controller.signal })
-        .then(async (response) => {
-          if (!response.ok) {
-            const payload = (await response.json().catch(
-              (): SearchErrorResponse => ({}),
-            )) as SearchErrorResponse
-
-            throw new Error(payload.error ?? 'Failed to search for cities.')
-          }
-
-          return response.json() as Promise<CityResult[]>
-        })
-        .then((payload) => {
-          setResults(payload)
-        })
-        .catch((fetchError: unknown) => {
-          if (
-            fetchError instanceof DOMException &&
-            fetchError.name === 'AbortError'
-          ) {
-            return
-          }
-
-          setResults([])
-          setError(
-            fetchError instanceof Error
-              ? fetchError.message
-              : 'Unable to search cities.',
-          )
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) {
-            setIsLoading(false)
-          }
-        })
+      setDebouncedQuery(normalizedQuery)
     }, SEARCH_DEBOUNCE_MS)
 
     return () => {
-      controller.abort()
       window.clearTimeout(timeoutId)
     }
   }, [query])
 
+  const citySearchQuery = useQuery({
+    queryKey: weatherQueryKeys.search(debouncedQuery),
+    queryFn: ({ signal }) => fetchCities(debouncedQuery, signal),
+    enabled: Boolean(debouncedQuery),
+    staleTime: SEARCH_QUERY_STALE_TIME,
+    gcTime: SEARCH_QUERY_GC_TIME,
+    retry: 1,
+  })
+
   return {
-    results,
-    isLoading,
-    error,
+    results: debouncedQuery ? citySearchQuery.data ?? [] : [],
+    isLoading: Boolean(debouncedQuery) && citySearchQuery.isFetching,
+    error:
+      citySearchQuery.error instanceof Error ? citySearchQuery.error.message : null,
   }
 }

@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 
+import { weatherQueryKeys } from '@/lib/query-keys'
 import type { CityResult, WeatherData } from '@/types/weather.types'
 
 const WEATHER_ENDPOINT = 'http://localhost:3001/api/weather/current'
+const WEATHER_QUERY_STALE_TIME = 3 * 60 * 1000
+const WEATHER_QUERY_GC_TIME = 6 * 60 * 1000
 
 interface WeatherErrorResponse {
   error?: string
@@ -14,75 +17,47 @@ interface UseWeatherDataResult {
   error: string | null
 }
 
+const fetchWeatherData = (
+  selectedCity: CityResult,
+  signal?: AbortSignal,
+): Promise<WeatherData> => {
+  const url = new URL(WEATHER_ENDPOINT)
+  url.searchParams.set('lat', String(selectedCity.latitude))
+  url.searchParams.set('lng', String(selectedCity.longitude))
+  url.searchParams.set('timezone', selectedCity.timezone)
+
+  return fetch(url.toString(), { signal })
+    .then(async (response) => {
+      if (!response.ok) {
+        const payload = (await response.json().catch(
+          (): WeatherErrorResponse => ({}),
+        )) as WeatherErrorResponse
+
+        throw new Error(payload.error ?? 'Failed to fetch weather data.')
+      }
+
+      return response.json() as Promise<WeatherData>
+    })
+}
+
 export const useWeatherData = (
   selectedCity: CityResult | null,
 ): UseWeatherDataResult => {
-  const [data, setData] = useState<WeatherData | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!selectedCity) {
-      setData(null)
-      setIsLoading(false)
-      setError(null)
-      return
-    }
-
-    const controller = new AbortController()
-
-    setIsLoading(true)
-    setError(null)
-
-    const url = new URL(WEATHER_ENDPOINT)
-    url.searchParams.set('lat', String(selectedCity.latitude))
-    url.searchParams.set('lng', String(selectedCity.longitude))
-    url.searchParams.set('timezone', selectedCity.timezone)
-
-    fetch(url.toString(), { signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) {
-          const payload = (await response.json().catch(
-            (): WeatherErrorResponse => ({}),
-          )) as WeatherErrorResponse
-
-          throw new Error(payload.error ?? 'Failed to fetch weather data.')
-        }
-
-        return response.json() as Promise<WeatherData>
-      })
-      .then((payload) => {
-        setData(payload)
-      })
-      .catch((fetchError: unknown) => {
-        if (
-          fetchError instanceof DOMException &&
-          fetchError.name === 'AbortError'
-        ) {
-          return
-        }
-
-        setData(null)
-        setError(
-          fetchError instanceof Error
-            ? fetchError.message
-            : 'Unable to fetch weather data.',
-        )
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) {
-          setIsLoading(false)
-        }
-      })
-
-    return () => {
-      controller.abort()
-    }
-  }, [selectedCity])
+  const weatherQuery = useQuery({
+    queryKey: weatherQueryKeys.current(selectedCity),
+    queryFn: ({ signal }) =>
+      selectedCity
+        ? fetchWeatherData(selectedCity, signal)
+        : Promise.reject(new Error('No city selected.')),
+    enabled: Boolean(selectedCity),
+    staleTime: WEATHER_QUERY_STALE_TIME,
+    gcTime: WEATHER_QUERY_GC_TIME,
+    retry: 1,
+  })
 
   return {
-    data,
-    isLoading,
-    error,
+    data: weatherQuery.data ?? null,
+    isLoading: weatherQuery.isPending,
+    error: weatherQuery.error instanceof Error ? weatherQuery.error.message : null,
   }
 }

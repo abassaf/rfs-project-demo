@@ -8,9 +8,12 @@ import {
 
 export const weatherRouter = Router();
 
-function getUpstreamErrorMessage(error: unknown, fallbackMessage: string): string {
+const getUpstreamErrorMessage = (
+  error: unknown,
+  fallbackMessage: string,
+): string => {
   return error instanceof UpstreamApiError ? error.message : fallbackMessage;
-}
+};
 
 weatherRouter.get('/search', (req, res) => {
   const query = typeof req.query.q === 'string' ? req.query.q.trim() : '';

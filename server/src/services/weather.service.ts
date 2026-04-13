@@ -62,11 +62,11 @@ const DEFAULT_WEATHER_CODE: WeatherCodeMetadata = {
   icon: '❓',
 };
 
-function throwUpstreamApiError(
+const throwUpstreamApiError = (
   error: unknown,
   fallbackMessage: string,
   source: string,
-): never {
+): never => {
   if (axios.isAxiosError(error)) {
     throw new UpstreamApiError(
       `${source} failed with status ${error.response?.status ?? 'unknown'}.`,
@@ -74,13 +74,13 @@ function throwUpstreamApiError(
   }
 
   throw new UpstreamApiError(fallbackMessage);
-}
+};
 
-function getWeatherCodeMetadata(code: number): WeatherCodeMetadata {
+const getWeatherCodeMetadata = (code: number): WeatherCodeMetadata => {
   return WEATHER_CODE_MAP[code] ?? DEFAULT_WEATHER_CODE;
-}
+};
 
-function normalizeCityResult(result: GeocodingResult): CityResult {
+const normalizeCityResult = (result: GeocodingResult): CityResult => {
   return {
     id: result.id,
     name: result.name,
@@ -90,11 +90,11 @@ function normalizeCityResult(result: GeocodingResult): CityResult {
     longitude: result.longitude,
     timezone: result.timezone,
   };
-}
+};
 
-function buildDailyForecast(
+const buildDailyForecast = (
   daily: OpenMeteoWeatherResponse['daily'],
-): DailyForecast[] {
+): DailyForecast[] => {
   return daily.time.slice(0, FORECAST_DAYS).map((date, index) => {
     const weatherCode = daily.weathercode[index];
     const weather = getWeatherCodeMetadata(weatherCode);
@@ -109,15 +109,15 @@ function buildDailyForecast(
       weatherIcon: weather.icon,
     };
   });
-}
+};
 
-function fallbackCityNameFromTimezone(timezone: string): string {
+const fallbackCityNameFromTimezone = (timezone: string): string => {
   const parts = timezone.split('/');
   const rawLabel = parts[parts.length - 1] ?? 'Selected location';
   return rawLabel.replace(/_/g, ' ');
-}
+};
 
-export function searchCities(query: string): Promise<CityResult[]> {
+export const searchCities = (query: string): Promise<CityResult[]> => {
   const normalizedQuery = query.trim();
 
   if (!normalizedQuery) {
@@ -139,13 +139,13 @@ export function searchCities(query: string): Promise<CityResult[]> {
         'Open-Meteo geocoding request',
       ),
     );
-}
+};
 
-export function getWeatherForCity(
+export const getWeatherForCity = (
   lat: number,
   lng: number,
   timezone: string,
-): Promise<WeatherData> {
+): Promise<WeatherData> => {
   return axios
     .get<OpenMeteoWeatherResponse>(WEATHER_API_URL, {
       params: {
@@ -187,4 +187,4 @@ export function getWeatherForCity(
         'Open-Meteo weather request',
       ),
     );
-}
+};

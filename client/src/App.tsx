@@ -1,3 +1,6 @@
+import { useState } from 'react'
+
+import { CitySearch } from '@/components/CitySearch'
 import {
   Card,
   CardContent,
@@ -5,8 +8,28 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { useWeatherData } from '@/hooks/useWeatherData'
+import type { CityResult } from '@/types/weather.types'
+
+const formatSelectedCity = (city: CityResult | null): string => {
+  if (!city) {
+    return 'Awaiting a city search'
+  }
+
+  return [city.name, city.region, city.country].filter(Boolean).join(', ')
+}
+
+const formatForecastDate = (date: string): string =>
+  new Intl.DateTimeFormat('en-AU', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  }).format(new Date(date))
 
 const App = () => {
+  const [selectedCity, setSelectedCity] = useState<CityResult | null>(null)
+  const { data, isLoading, error } = useWeatherData(selectedCity)
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-slate-950 text-slate-100">
       <div className="pointer-events-none absolute inset-0">
@@ -48,9 +71,11 @@ const App = () => {
                   >
                     Search
                   </h2>
-                  {/* search bar component */}
-                  <div className="mt-4 rounded-2xl border border-dashed border-cyan-300/25 bg-slate-950/70 px-4 py-5 text-sm text-slate-400">
-                    Search bar component placeholder
+                  <div className="mt-4">
+                    <CitySearch
+                      onCitySelect={setSelectedCity}
+                      selectedCity={selectedCity}
+                    />
                   </div>
                 </section>
 
@@ -64,9 +89,111 @@ const App = () => {
                   >
                     Forecast
                   </h2>
-                  {/* weather display component */}
-                  <div className="mt-4 rounded-2xl border border-dashed border-sky-300/25 bg-slate-950/70 px-4 py-12 text-sm text-slate-400">
-                    Weather display component placeholder
+                  <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/70 p-5">
+                    {!selectedCity && !isLoading ? (
+                      <div className="space-y-3 py-8 text-slate-400">
+                        <p className="text-lg font-medium text-slate-200">
+                          Search for a city to begin
+                        </p>
+                        <p className="max-w-xl text-sm leading-7">
+                          Choose a city from the autocomplete results to load
+                          current conditions and the five-day forecast.
+                        </p>
+                      </div>
+                    ) : null}
+
+                    {isLoading ? (
+                      <div className="space-y-4 py-4">
+                        <div className="h-8 w-40 animate-pulse rounded-full bg-white/10" />
+                        <div className="h-14 w-56 animate-pulse rounded-2xl bg-white/10" />
+                        <div className="grid gap-3 md:grid-cols-3">
+                          <div className="h-20 animate-pulse rounded-2xl bg-white/8" />
+                          <div className="h-20 animate-pulse rounded-2xl bg-white/8" />
+                          <div className="h-20 animate-pulse rounded-2xl bg-white/8" />
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {!isLoading && error ? (
+                      <div className="rounded-2xl border border-rose-400/20 bg-rose-400/10 px-4 py-5 text-sm text-rose-100">
+                        {error}
+                      </div>
+                    ) : null}
+
+                    {!isLoading && !error && data && selectedCity ? (
+                      <div className="space-y-6">
+                        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+                          <div>
+                            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
+                              Now viewing
+                            </p>
+                            <h3 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white md:text-4xl">
+                              {formatSelectedCity(selectedCity)}
+                            </h3>
+                            <p className="mt-2 text-sm text-slate-400">
+                              {data.weatherDescription} • {data.timezone}
+                            </p>
+                          </div>
+
+                          <div className="rounded-3xl border border-cyan-300/20 bg-cyan-400/10 px-5 py-4 text-right">
+                            <p className="text-xs uppercase tracking-[0.22em] text-cyan-200/80">
+                              Current
+                            </p>
+                            <p className="mt-2 text-4xl font-semibold text-white">
+                              {Math.round(data.temperature)}°C
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid gap-3 md:grid-cols-3">
+                          <article className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                              Humidity
+                            </p>
+                            <p className="mt-2 text-xl font-medium text-slate-100">
+                              {data.humidity}%
+                            </p>
+                          </article>
+                          <article className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                              Wind
+                            </p>
+                            <p className="mt-2 text-xl font-medium text-slate-100">
+                              {data.windSpeed} km/h
+                            </p>
+                          </article>
+                          <article className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                              Observed
+                            </p>
+                            <p className="mt-2 text-xl font-medium text-slate-100">
+                              {data.weatherIcon} {data.weatherDescription}
+                            </p>
+                          </article>
+                        </div>
+
+                        <div className="grid gap-3 md:grid-cols-5">
+                          {data.forecast.map((day) => (
+                            <article
+                              key={day.date}
+                              className="rounded-2xl border border-white/10 bg-white/5 p-4"
+                            >
+                              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                                {formatForecastDate(day.date)}
+                              </p>
+                              <p className="mt-3 text-2xl">{day.weatherIcon}</p>
+                              <p className="mt-3 text-sm font-medium text-slate-100">
+                                {Math.round(day.maxTemperature)}° /{' '}
+                                {Math.round(day.minTemperature)}°
+                              </p>
+                              <p className="mt-2 text-xs leading-6 text-slate-400">
+                                {day.weatherDescription}
+                              </p>
+                            </article>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 </section>
               </div>
@@ -81,35 +208,43 @@ const App = () => {
                       id="design-direction-heading"
                       className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500"
                     >
-                      Design Direction
+                      Session
                     </h2>
                     <p className="mt-3 text-sm leading-7 text-slate-300">
-                      Deep slate surfaces, cyan atmospheric glow, and a glassy
-                      command-panel card layout tuned for a weather product.
+                      The search panel now drives live backend lookups with a
+                      centered glass-card layout tuned for weather browsing.
                     </p>
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-3 md:grid-cols-1">
                     <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
                       <h3 className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                        Surface
+                        Selected
                       </h3>
                       <p className="mt-2 text-sm text-slate-200">
-                        Slate 950 base
+                        {selectedCity ? selectedCity.name : 'None'}
                       </p>
                     </section>
                     <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
                       <h3 className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                        Accent
+                        Timezone
                       </h3>
-                      <p className="mt-2 text-sm text-slate-200">Cyan glow</p>
+                      <p className="mt-2 text-sm text-slate-200">
+                        {selectedCity?.timezone ?? 'Awaiting selection'}
+                      </p>
                     </section>
                     <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
                       <h3 className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                        Layout
+                        Status
                       </h3>
                       <p className="mt-2 text-sm text-slate-200">
-                        Centered card
+                        {isLoading
+                          ? 'Loading'
+                          : error
+                            ? 'Error'
+                            : data
+                              ? 'Ready'
+                              : 'Idle'}
                       </p>
                     </section>
                   </div>

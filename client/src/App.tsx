@@ -1,6 +1,8 @@
 import { useState } from 'react'
 
 import { CitySearch } from '@/components/CitySearch'
+import { CurrentWeather } from '@/components/CurrentWeather'
+import { ForecastStrip } from '@/components/ForecastStrip'
 import {
   Card,
   CardContent,
@@ -10,21 +12,6 @@ import {
 } from '@/components/ui/card'
 import { useWeatherData } from '@/hooks/useWeatherData'
 import type { CityResult } from '@/types/weather.types'
-
-const formatSelectedCity = (city: CityResult | null): string => {
-  if (!city) {
-    return 'Awaiting a city search'
-  }
-
-  return [city.name, city.region, city.country].filter(Boolean).join(', ')
-}
-
-const formatForecastDate = (date: string): string =>
-  new Intl.DateTimeFormat('en-AU', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  }).format(new Date(date))
 
 const App = () => {
   const [selectedCity, setSelectedCity] = useState<CityResult | null>(null)
@@ -38,8 +25,8 @@ const App = () => {
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
       </div>
 
-      <div className="relative mx-auto flex min-h-screen max-w-6xl items-center justify-center px-6 py-12">
-        <Card className="w-full max-w-5xl border border-white/10 bg-slate-900/70 shadow-[0_32px_90px_-40px_rgba(14,165,233,0.45)] backdrop-blur-2xl">
+      <div className="relative mx-auto flex min-h-screen max-w-[96rem] items-center justify-center px-4 py-8 sm:px-6 lg:px-10 lg:py-12">
+        <Card className="w-full border border-white/10 bg-slate-900/70 shadow-[0_32px_90px_-40px_rgba(14,165,233,0.45)] backdrop-blur-2xl">
           <article>
             <CardHeader className="gap-5 border-b border-white/10 pb-8">
               <header className="space-y-5">
@@ -59,11 +46,11 @@ const App = () => {
               </header>
             </CardHeader>
 
-            <CardContent className="grid gap-6 p-6 md:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.9fr)] md:p-8">
+            <CardContent className="grid gap-6 p-5 md:p-7 xl:grid-cols-[minmax(0,1.7fr)_320px] xl:gap-8 xl:p-8">
               <div className="space-y-6">
                 <section
                   aria-labelledby="search-heading"
-                  className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-inner shadow-black/20"
+                  className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-inner shadow-black/20 md:p-6"
                 >
                   <h2
                     id="search-heading"
@@ -81,7 +68,7 @@ const App = () => {
 
                 <section
                   aria-labelledby="forecast-heading"
-                  className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/8 to-white/4 p-5 shadow-inner shadow-black/20"
+                  className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/8 to-white/4 p-5 shadow-inner shadow-black/20 md:p-6"
                 >
                   <h2
                     id="forecast-heading"
@@ -89,7 +76,7 @@ const App = () => {
                   >
                     Forecast
                   </h2>
-                  <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/70 p-5">
+                  <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/70 p-4 md:p-5">
                     {!selectedCity && !isLoading ? (
                       <div className="space-y-3 py-8 text-slate-400">
                         <p className="text-lg font-medium text-slate-200">
@@ -122,76 +109,15 @@ const App = () => {
 
                     {!isLoading && !error && data && selectedCity ? (
                       <div className="space-y-6">
-                        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-                          <div>
-                            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
-                              Now viewing
-                            </p>
-                            <h3 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white md:text-4xl">
-                              {formatSelectedCity(selectedCity)}
-                            </h3>
-                            <p className="mt-2 text-sm text-slate-400">
-                              {data.weatherDescription} • {data.timezone}
-                            </p>
-                          </div>
-
-                          <div className="rounded-3xl border border-cyan-300/20 bg-cyan-400/10 px-5 py-4 text-right">
-                            <p className="text-xs uppercase tracking-[0.22em] text-cyan-200/80">
-                              Current
-                            </p>
-                            <p className="mt-2 text-4xl font-semibold text-white">
-                              {Math.round(data.temperature)}°C
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="grid gap-3 md:grid-cols-3">
-                          <article className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                              Humidity
-                            </p>
-                            <p className="mt-2 text-xl font-medium text-slate-100">
-                              {data.humidity}%
-                            </p>
-                          </article>
-                          <article className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                              Wind
-                            </p>
-                            <p className="mt-2 text-xl font-medium text-slate-100">
-                              {data.windSpeed} km/h
-                            </p>
-                          </article>
-                          <article className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                              Observed
-                            </p>
-                            <p className="mt-2 text-xl font-medium text-slate-100">
-                              {data.weatherIcon} {data.weatherDescription}
-                            </p>
-                          </article>
-                        </div>
-
-                        <div className="grid gap-3 md:grid-cols-5">
-                          {data.forecast.map((day) => (
-                            <article
-                              key={day.date}
-                              className="rounded-2xl border border-white/10 bg-white/5 p-4"
-                            >
-                              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                                {formatForecastDate(day.date)}
-                              </p>
-                              <p className="mt-3 text-2xl">{day.weatherIcon}</p>
-                              <p className="mt-3 text-sm font-medium text-slate-100">
-                                {Math.round(day.maxTemperature)}° /{' '}
-                                {Math.round(day.minTemperature)}°
-                              </p>
-                              <p className="mt-2 text-xs leading-6 text-slate-400">
-                                {day.weatherDescription}
-                              </p>
-                            </article>
-                          ))}
-                        </div>
+                        <CurrentWeather
+                          data={{
+                            ...data,
+                            city: selectedCity.name,
+                            country: selectedCity.country,
+                            region: selectedCity.region,
+                          }}
+                        />
+                        <ForecastStrip forecast={data.forecast} />
                       </div>
                     ) : null}
                   </div>
@@ -200,7 +126,7 @@ const App = () => {
 
               <aside
                 aria-labelledby="design-direction-heading"
-                className="rounded-[2rem] border border-white/10 bg-slate-950/80 p-6"
+                className="rounded-[2rem] border border-white/10 bg-slate-950/80 p-6 xl:sticky xl:top-8 xl:self-start"
               >
                 <div className="space-y-5">
                   <div>

@@ -5,7 +5,8 @@ import { weatherQueryKeys } from '@/lib/query-keys'
 import type { CityResult } from '@/types/weather.types'
 
 const SEARCH_DEBOUNCE_MS = 400
-const SEARCH_ENDPOINT = 'http://localhost:3001/api/weather/search'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const SEARCH_ENDPOINT = `${API_BASE_URL}/api/weather/search`
 const SEARCH_QUERY_STALE_TIME = 2 * 60 * 1000
 const SEARCH_QUERY_GC_TIME = 5 * 60 * 1000
 

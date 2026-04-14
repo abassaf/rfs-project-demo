@@ -141,10 +141,17 @@ export const searchCities = (query: string): Promise<CityResult[]> => {
     );
 };
 
+interface CityMeta {
+  city: string;
+  country: string;
+  region?: string;
+}
+
 export const getWeatherForCity = (
   lat: number,
   lng: number,
   timezone: string,
+  cityMeta?: CityMeta,
 ): Promise<WeatherData> => {
   return axios
     .get<OpenMeteoWeatherResponse>(WEATHER_API_URL, {
@@ -163,8 +170,9 @@ export const getWeatherForCity = (
       const currentWeather = getWeatherCodeMetadata(data.current.weathercode);
 
       return {
-        city: fallbackCityNameFromTimezone(data.timezone),
-        country: '',
+        city: cityMeta?.city ?? fallbackCityNameFromTimezone(data.timezone),
+        country: cityMeta?.country ?? '',
+        region: cityMeta?.region,
         timezone: data.timezone,
         coordinates: {
           latitude: data.latitude,

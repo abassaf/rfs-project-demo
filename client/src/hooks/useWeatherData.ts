@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { weatherQueryKeys } from '@/lib/query-keys'
 import type { CityResult, WeatherData } from '@/types/weather.types'
 
-const WEATHER_ENDPOINT = 'http://localhost:3001/api/weather/current'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const WEATHER_ENDPOINT = `${API_BASE_URL}/api/weather/current`
 const WEATHER_QUERY_STALE_TIME = 3 * 60 * 1000
 const WEATHER_QUERY_GC_TIME = 6 * 60 * 1000
 
@@ -26,6 +27,11 @@ const fetchWeatherData = (
   url.searchParams.set('lat', String(selectedCity.latitude))
   url.searchParams.set('lng', String(selectedCity.longitude))
   url.searchParams.set('timezone', selectedCity.timezone)
+  url.searchParams.set('city', selectedCity.name)
+  url.searchParams.set('country', selectedCity.country)
+  if (selectedCity.region) {
+    url.searchParams.set('region', selectedCity.region)
+  }
 
   return fetch(url.toString(), { signal })
     .then(async (response) => {

@@ -62,7 +62,13 @@ weatherRouter.get('/current', (req, res) => {
     });
   }
 
-  return getWeatherForCity(lat, lng, timezone)
+  const cityName = typeof req.query.city === 'string' ? req.query.city.trim() : undefined;
+  const country = typeof req.query.country === 'string' ? req.query.country.trim() : undefined;
+  const region = typeof req.query.region === 'string' ? req.query.region.trim() : undefined;
+  const cityMeta =
+    cityName && country ? { city: cityName, country, region } : undefined;
+
+  return getWeatherForCity(lat, lng, timezone, cityMeta)
     .then((weatherData) => res.status(200).json(weatherData))
     .catch((error: unknown) =>
       res.status(502).json({

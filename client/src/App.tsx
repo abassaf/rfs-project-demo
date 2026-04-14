@@ -163,15 +163,14 @@ const App = () => {
                     RFS Weather
                   </CardTitle>
                   <CardDescription className="max-w-2xl text-base leading-7 text-slate-300 md:text-lg">
-                    A premium weather dashboard shell for fast city search,
-                    current conditions, and a clean multi-day forecast
-                    experience.
+                    Search for any city to view current conditions and a
+                    5-day forecast.
                   </CardDescription>
                 </div>
               </header>
             </CardHeader>
 
-            <CardContent className="grid gap-6 p-5 md:p-7 xl:grid-cols-[minmax(0,1.7fr)_320px] xl:gap-8 xl:p-8">
+            <CardContent className="p-5 md:p-7 xl:p-8">
               <div className="space-y-6">
                 <section
                   aria-labelledby="search-heading"
@@ -208,16 +207,14 @@ const App = () => {
                       <div className="overflow-hidden rounded-[2rem] border border-cyan-300/10 bg-gradient-to-br from-cyan-400/10 via-slate-950/50 to-sky-500/10 px-6 py-10 sm:px-8">
                         <div className="max-w-2xl space-y-4">
                           <p className="text-xs font-medium uppercase tracking-[0.28em] text-cyan-200/75">
-                            Live forecast shell
+                            Get started
                           </p>
                           <h3 className="text-3xl font-semibold tracking-[-0.05em] text-white sm:text-4xl">
                             Search for a city to load your weather briefing
                           </h3>
                           <p className="text-sm leading-7 text-slate-300 sm:text-base">
                             Use the city search above to load current conditions
-                            and a five day outlook. Cached queries keep repeat
-                            lookups fast while the layout stays centered across
-                            desktop and mobile.
+                            and a five-day outlook.
                           </p>
                         </div>
                       </div>
@@ -313,75 +310,15 @@ const App = () => {
                       </Card>
                     ) : null}
 
-                    {!isLoading && !error && data && selectedCity ? (
+                    {!isLoading && !error && data ? (
                       <div className="space-y-6">
-                        <CurrentWeather
-                          data={{
-                            ...data,
-                            city: selectedCity.name,
-                            country: selectedCity.country,
-                            region: selectedCity.region,
-                          }}
-                        />
+                        <CurrentWeather data={data} />
                         <ForecastStrip forecast={data.forecast} />
                       </div>
                     ) : null}
                   </div>
                 </section>
               </div>
-
-              <aside
-                aria-labelledby="design-direction-heading"
-                className="rounded-[2rem] border border-white/10 bg-slate-950/80 p-6 xl:sticky xl:top-8 xl:self-start"
-              >
-                <div className="space-y-5">
-                  <div>
-                    <h2
-                      id="design-direction-heading"
-                      className="text-sm font-medium uppercase tracking-[0.24em] text-slate-500"
-                    >
-                      Session
-                    </h2>
-                    <p className="mt-3 text-sm leading-7 text-slate-300">
-                      The search panel now drives live backend lookups with a
-                      centered glass-card layout tuned for weather browsing.
-                    </p>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-3 md:grid-cols-1">
-                    <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <h3 className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                        Selected
-                      </h3>
-                      <p className="mt-2 text-sm text-slate-200">
-                        {selectedCity ? selectedCity.name : cityQuery || 'None'}
-                      </p>
-                    </section>
-                    <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <h3 className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                        Timezone
-                      </h3>
-                      <p className="mt-2 text-sm text-slate-200">
-                        {selectedCity?.timezone ?? 'Awaiting selection'}
-                      </p>
-                    </section>
-                    <section className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <h3 className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                        Status
-                      </h3>
-                      <p className="mt-2 text-sm text-slate-200">
-                        {isLoading
-                          ? 'Loading'
-                          : error
-                            ? 'Error'
-                            : data
-                              ? 'Ready'
-                              : 'Idle'}
-                      </p>
-                    </section>
-                  </div>
-                </div>
-              </aside>
             </CardContent>
           </article>
         </Card>

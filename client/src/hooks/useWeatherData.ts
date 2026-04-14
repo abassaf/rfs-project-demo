@@ -15,6 +15,7 @@ interface UseWeatherDataResult {
   data: WeatherData | null
   isLoading: boolean
   error: string | null
+  refetch: () => Promise<unknown>
 }
 
 const fetchWeatherData = (
@@ -59,5 +60,6 @@ export const useWeatherData = (
     data: weatherQuery.data ?? null,
     isLoading: weatherQuery.isPending,
     error: weatherQuery.error instanceof Error ? weatherQuery.error.message : null,
+    refetch: weatherQuery.refetch,
   }
 }

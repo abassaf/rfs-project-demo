@@ -13,6 +13,8 @@ import { useWeatherSearch } from '@/hooks/useWeatherSearch'
 
 interface CitySearchProps {
   onCitySelect: (city: CityResult) => void
+  onQueryChange: (query: string) => void
+  query: string
   selectedCity?: CityResult | null
 }
 
@@ -21,9 +23,10 @@ const formatCityLabel = (city: CityResult): string =>
 
 export const CitySearch = ({
   onCitySelect,
+  onQueryChange,
+  query,
   selectedCity = null,
 }: CitySearchProps) => {
-  const [query, setQuery] = useState(selectedCity ? formatCityLabel(selectedCity) : '')
   const [isOpen, setIsOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const { results, isLoading, error } = useWeatherSearch(query)
@@ -35,12 +38,10 @@ export const CitySearch = ({
 
   useEffect(() => {
     if (selectedCity) {
-      setQuery(formatCityLabel(selectedCity))
+      onQueryChange(formatCityLabel(selectedCity))
       return
     }
-
-    setQuery('')
-  }, [selectedCity])
+  }, [onQueryChange, selectedCity])
 
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {
@@ -71,7 +72,7 @@ export const CitySearch = ({
         value={query}
         onFocus={() => setIsOpen(true)}
         onChange={(event) => {
-          setQuery(event.target.value)
+          onQueryChange(event.target.value)
           setIsOpen(true)
         }}
         placeholder="Search Sydney, Melbourne, Tokyo..."
@@ -119,7 +120,7 @@ export const CitySearch = ({
                         type="button"
                         onClick={() => {
                           onCitySelect(city)
-                          setQuery(label)
+                          onQueryChange(label)
                           setIsOpen(false)
                         }}
                         className={cn(

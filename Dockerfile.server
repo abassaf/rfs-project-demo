@@ -9,11 +9,16 @@ COPY client/package.json ./client/
 COPY server/package.json ./server/
 COPY shared ./shared/
 
-# Install dependencies globally in the container.
-# This avoids breaking PNPM symlinks which happens when copying node_modules across multistage builds!
+# Install all dependencies (client + server) so both can be built
 RUN pnpm install --frozen-lockfile
 
+COPY client ./client/
 COPY server ./server/
+
+# Build client first so Express can serve the static files
+ENV VITE_API_URL=""
+RUN pnpm --filter client build
+
 RUN pnpm --filter server build
 
 WORKDIR /app/server

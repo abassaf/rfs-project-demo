@@ -7,17 +7,8 @@ services:
     dns:
       - 8.8.8.8
       - 8.8.4.4
-    # We do NOT expose ports to the host (e.g. ports: ["3001:3001"])
-    # to guarantee zero clashes on your Proxmox server or local machine.
-
-  client:
-    build:
-      context: .
-      dockerfile: Dockerfile.client
-    restart: unless-stopped
-    depends_on:
-      - server
-    # Nginx runs on port 80 internally, handling UI and proxying /api automatically.
+    # Express serves both the React frontend and the /api routes on port 3001.
+    # No nginx needed — cloudflared tunnels directly to http://server:3001.
 
   cloudflared:
     image: cloudflare/cloudflared:latest
@@ -26,5 +17,5 @@ services:
     environment:
       - TUNNEL_TOKEN=${TUNNEL_TOKEN}
     depends_on:
-      - client
-    # The Cloudflare tunnel securely connects the internal network to edge without inbound ports.
+      - server
+    # Cloudflare tunnel ingress must be configured to: http://server:3001

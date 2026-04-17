@@ -27,7 +27,7 @@ weatherRouter.get('/search', (req, res) => {
   return searchCities(query)
     .then((results) => res.status(200).json(results))
     .catch((error: unknown) =>
-      res.status(502).json({
+      res.status(500).json({
         error: getUpstreamErrorMessage(
           error,
           'Failed to fetch city search results.',
@@ -71,7 +71,7 @@ weatherRouter.get('/current', (req, res) => {
   return getWeatherForCity(lat, lng, timezone, cityMeta)
     .then((weatherData) => res.status(200).json(weatherData))
     .catch((error: unknown) =>
-      res.status(502).json({
+      res.status(500).json({
         error: getUpstreamErrorMessage(error, 'Failed to fetch weather data.'),
       }),
     );

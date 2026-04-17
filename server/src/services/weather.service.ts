@@ -11,6 +11,7 @@ import type {
 
 const GEOCODING_API_URL = 'https://geocoding-api.open-meteo.com/v1/search';
 const WEATHER_API_URL = 'https://api.open-meteo.com/v1/forecast';
+const UPSTREAM_TIMEOUT_MS = 8000;
 const FORECAST_DAYS = 5;
 
 interface WeatherCodeMetadata {
@@ -130,6 +131,7 @@ export const searchCities = (query: string): Promise<CityResult[]> => {
         name: normalizedQuery,
         count: 5,
       },
+      timeout: UPSTREAM_TIMEOUT_MS,
     })
     .then((response) => (response.data.results ?? []).map(normalizeCityResult))
     .catch((error: unknown) =>
@@ -164,6 +166,7 @@ export const getWeatherForCity = (
           'temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max',
         timezone,
       },
+      timeout: UPSTREAM_TIMEOUT_MS,
     })
     .then((response) => {
       const { data } = response;

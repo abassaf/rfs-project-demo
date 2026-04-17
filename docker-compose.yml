@@ -4,7 +4,10 @@ services:
       context: .
       dockerfile: Dockerfile.server
     restart: unless-stopped
-    # We do NOT expose ports to the host (e.g. ports: ["3001:3001"]) 
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    # We do NOT expose ports to the host (e.g. ports: ["3001:3001"])
     # to guarantee zero clashes on your Proxmox server or local machine.
 
   client:

@@ -4,11 +4,11 @@ services:
       context: .
       dockerfile: Dockerfile.server
     restart: unless-stopped
+    networks:
+      - app-net
     dns:
       - 8.8.8.8
       - 8.8.4.4
-    # Express serves both the React frontend and the /api routes on port 3001.
-    # No nginx needed — cloudflared tunnels directly to http://server:3001.
 
   cloudflared:
     image: cloudflare/cloudflared:latest
@@ -18,4 +18,9 @@ services:
       - TUNNEL_TOKEN=${TUNNEL_TOKEN}
     depends_on:
       - server
-    # Cloudflare tunnel ingress must be configured to: http://server:3001
+    networks:
+      - app-net
+
+networks:
+  app-net:
+    driver: bridge

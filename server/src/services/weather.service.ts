@@ -69,11 +69,13 @@ const throwUpstreamApiError = (
   source: string,
 ): never => {
   if (axios.isAxiosError(error)) {
+    console.error(`[${source}] code=${error.code} status=${error.response?.status} msg=${error.message}`);
     throw new UpstreamApiError(
-      `${source} failed with status ${error.response?.status ?? 'unknown'}.`,
+      `${source} failed — code: ${error.code ?? 'unknown'}, status: ${error.response?.status ?? 'none'}.`,
     );
   }
 
+  console.error(`[${source}] unexpected error:`, error);
   throw new UpstreamApiError(fallbackMessage);
 };
 

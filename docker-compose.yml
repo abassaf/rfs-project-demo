@@ -1,4 +1,12 @@
 services:
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    restart: unless-stopped
+    networks:
+      - app-net
+
   server:
     build:
       context: .
@@ -17,6 +25,7 @@ services:
     environment:
       - TUNNEL_TOKEN=${TUNNEL_TOKEN}
     depends_on:
+      - client
       - server
     networks:
       - app-net

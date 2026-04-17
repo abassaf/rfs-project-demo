@@ -1,4 +1,9 @@
+import https from 'https';
+
 import axios from 'axios';
+
+// Docker/Proxmox environments often lack IPv6 routing — force IPv4 to prevent ETIMEDOUT
+const httpsAgent = new https.Agent({ family: 4 });
 
 import type {
   CityResult,
@@ -134,6 +139,7 @@ export const searchCities = (query: string): Promise<CityResult[]> => {
         count: 5,
       },
       timeout: UPSTREAM_TIMEOUT_MS,
+      httpsAgent,
     })
     .then((response) => (response.data.results ?? []).map(normalizeCityResult))
     .catch((error: unknown) =>
@@ -169,6 +175,7 @@ export const getWeatherForCity = (
         timezone,
       },
       timeout: UPSTREAM_TIMEOUT_MS,
+      httpsAgent,
     })
     .then((response) => {
       const { data } = response;

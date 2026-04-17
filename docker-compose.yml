@@ -1,0 +1,27 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    restart: unless-stopped
+    # We do NOT expose ports to the host (e.g. ports: ["3001:3001"]) 
+    # to guarantee zero clashes on your Proxmox server or local machine.
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    restart: unless-stopped
+    depends_on:
+      - server
+    # Nginx runs on port 80 internally, handling UI and proxying /api automatically.
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    depends_on:
+      - client
+    # The Cloudflare tunnel securely connects the internal network to edge without inbound ports.
